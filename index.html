@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>משימות בכיף – ניהול פרויקט משותף</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&family=Suez+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span>⚡</span>
+      <span class="brand-name">משימות בכיף</span>
+    </div>
+    <div class="top-actions">
+      <div id="cloudStatus" class="cloud-chip local">💾 שמירה מקומית</div>
+      <button id="soundToggleBtn" class="icon-btn" title="השתק / הפעל צלילים">🔊</button>
+      <button id="copyLinkBtn" class="icon-btn hidden" title="העתק קוד פרויקט לשיתוף">🔗</button>
+      <button id="logoutBtn" class="icon-btn hidden" title="יציאה מפרויקט">🚪</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="loginView" class="login">
+      <div class="hero-icon">🚀</div>
+      <h1>מנהלים <span class="hl">ביחד</span></h1>
+      <p class="muted">הזינו מזהה פרויקט (ID) כדי להיכנס ללוח המשותף, או צרו קוד חדש</p>
+
+      <div class="login-card">
+        <label for="projectIdInput">קוד פרויקט (Project ID)</label>
+        <div class="code-row">
+          <input id="projectIdInput" type="text" placeholder="למשל: HOME-2026" maxlength="20" />
+          <button id="genCodeBtn" class="btn secondary small" type="button" title="צור קוד אקראי">🎲 חדש</button>
+        </div>
+        <button id="enterBtn" class="btn" type="button">כניסה לפרויקט ✨</button>
+      </div>
+    </section>
+
+    <section id="boardView" class="hidden">
+      <div class="project-banner">
+        <div class="project-badge">פרויקט: <span id="activeProjectLabel" class="ltr"></span></div>
+        <button id="openAddModalBtn" class="btn">+ הוספת משימה חדשה</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat" style="--c: var(--todo)">
+          <span>📋</span>
+          <b id="statTotal">0</b>
+          <small>סה"כ משימות</small>
+        </div>
+        <div class="stat" style="--c: var(--doing)">
+          <span>⚙️</span>
+          <b id="statActive">0</b>
+          <small>בתהליך / ממתין</small>
+        </div>
+        <div class="stat" style="--c: var(--good)">
+          <span>✅</span>
+          <b id="statDone">0</b>
+          <small>בוצעו</small>
+        </div>
+        <div class="stat" style="--c: var(--gold)">
+          <span>💰</span>
+          <b id="statCost">0 ₪</b>
+          <small>עלות כוללת</small>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <input id="searchInput" type="search" placeholder="🔍 חיפוש לפי כותרת, תיאור או הערות..." />
+        <select id="filterStatus">
+          <option value="all">כל הסטטוסים</option>
+          <option value="todo">📌 עוד לא התחיל</option>
+          <option value="doing">⚙️ עובדים על זה</option>
+          <option value="waiting">⏳ מחכה ל...</option>
+          <option value="done">✅ בוצע</option>
+        </select>
+      </div>
+
+      <div id="taskGrid" class="task-grid"></div>
+    </section>
+  </main>
+
+  <div id="taskModal" class="modal hidden">
+    <div class="modal-card">
+      <h2 id="modalTitle" style="margin-top:0">משימה חדשה</h2>
+      <form id="taskForm" class="form">
+        <input type="hidden" id="taskId" />
+        <label>
+          כותרת המשימה *
+          <input id="taskTitle" type="text" required placeholder="מה צריך לעשות?" />
+        </label>
+        <label>
+          סטטוס
+          <select id="taskStatus">
+            <option value="todo">📌 עוד לא התחיל</option>
+            <option value="doing">⚙️ עובדים על זה</option>
+            <option value="waiting">⏳ מחכה ל...</option>
+            <option value="done">✅ בוצע</option>
+          </select>
+        </label>
+        <label>
+          מחיר / עלות משוערת (₪)
+          <input id="taskPrice" type="number" min="0" step="1" placeholder="0" />
+        </label>
+        <label>
+          תיאור מפורט
+          <textarea id="taskDesc" rows="2" placeholder="פרטים נוספים על המשימה..."></textarea>
+        </label>
+        <label>
+          הערות (למשל: למי מחכים, ספק, טלפון)
+          <input id="taskNotes" type="text" placeholder="הערות קצרות..." />
+        </label>
+        <div class="modal-actions">
+          <button type="button" id="closeModalBtn" class="btn secondary">ביטול</button>
+          <button type="submit" class="btn">שמירה 💾</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <footer class="site-footer">
+    פותח באהבה על ידי TgSofts · 052-5914007
+  </footer>
+
+  <script src="config.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    let soundOn = localStorage.getItem('todo_sound') !== 'off';
+    const soundBtn = document.getElementById('soundToggleBtn');
+    soundBtn.textContent = soundOn ? '🔊' : '🔇';
+
+    let audioCtx = null;
+    function playTone(freqs, type = 'sine', duration = 0.14, gap = 0.07) {
+      if (!soundOn) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+        freqs.forEach((f, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(f, now + i * gap);
+          gain.gain.setValueAtTime(0.12, now + i * gap);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * gap + duration);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + i * gap);
+          osc.stop(now + i * gap + duration);
+        });
+      } catch (e) {}
+    }
+
+    const sfx = {
+      pop: () => playTone([520, 680], 'sine', 0.1, 0.04),
+      enter: () => playTone([440, 554.37, 659.25], 'triangle', 0.16, 0.07),
+      done: () => playTone([523.25, 659.25, 783.99, 1046.5], 'sine', 0.18, 0.08),
+      del: () => playTone([380, 260], 'sine', 0.14, 0.06),
+      dice: () => playTone([600, 750, 900], 'sine', 0.07, 0.04)
+    };
+
+    soundBtn.onclick = () => {
+      soundOn = !soundOn;
+      localStorage.setItem('todo_sound', soundOn ? 'on' : 'off');
+      soundBtn.textContent = soundOn ? '🔊' : '🔇';
+      if (soundOn) sfx.pop();
+    };
+
+    let db = null;
+    let unsubscribe = null;
+    let currentProjectId = '';
+    let tasks = [];
+
+    const hasCloud = window.CLOUD && window.CLOUD.apiKey && window.CLOUD.projectId;
+    const cloudChip = document.getElementById('cloudStatus');
+
+    if (hasCloud) {
+      try {
+        const app = initializeApp({
+          apiKey: window.CLOUD.apiKey,
+          projectId: window.CLOUD.projectId
+        });
+        db = getFirestore(app);
+        setCloudState('saved', '☁️ מחובר לענן');
+      } catch (e) {
+        console.error(e);
+        setCloudState('local', '⚠️ שגיאת ענן (מקומי)');
+      }
+    }
+
+    function setCloudState(cls, text) {
+      cloudChip.className = 'cloud-chip ' + cls;
+      cloudChip.textContent = text;
+    }
+
+    function showToast(msg, type = 'good') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast show ${type}`;
+      setTimeout(() => t.classList.remove('show'), 2600);
+    }
+
+    document.getElementById('genCodeBtn').onclick = () => {
+      sfx.dice();
+      const code = 'PRJ-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+      document.getElementById('projectIdInput').value = code;
+    };
+
+    document.getElementById('enterBtn').onclick = () => {
+      const val = document.getElementById('projectIdInput').value.trim().toUpperCase();
+      if (!val) return showToast('נא להזין קוד פרויקט', '');
+      sfx.enter();
+      openProject(val);
+    };
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('id')) {
+      openProject(urlParams.get('id').toUpperCase());
+    }
+
+    function openProject(pid) {
+      currentProjectId = pid;
+      document.getElementById('activeProjectLabel').textContent = pid;
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('boardView').classList.remove('hidden');
+      document.getElementById('logoutBtn').classList.remove('hidden');
+      document.getElementById('copyLinkBtn').classList.remove('hidden');
+
+      const newUrl = `${window.location.pathname}?id=${encodeURIComponent(pid)}`;
+      window.history.replaceState({}, '', newUrl);
+
+      if (db) {
+        if (unsubscribe) unsubscribe();
+        setCloudState('saving', '⏳ טוען...');
+        unsubscribe = onSnapshot(doc(db, 'todo_projects', pid), (snap) => {
+          tasks = snap.exists() ? (snap.data().tasks || []) : [];
+          setCloudState('saved', '☁️ מסונכרן');
+          render();
+        }, (err) => {
+          console.error(err);
+          setCloudState('local', '⚠️ שגיאת סנכרון');
+        });
+      } else {
+        const saved = localStorage.getItem('todo_' + pid);
+        tasks = saved ? JSON.parse(saved) : [];
+        render();
+      }
+    }
+
+    async function saveTasks() {
+      render();
+      if (db) {
+        setCloudState('saving', '⏳ שומר...');
+        await setDoc(doc(db, 'todo_projects', currentProjectId), {
+          tasks,
+          updatedAt: Date.now()
+        });
+        setCloudState('saved', '☁️ נשמר בענן');
+      } else {
+        localStorage.setItem('todo_' + currentProjectId, JSON.stringify(tasks));
+      }
+    }
+
+    document.getElementById('logoutBtn').onclick = () => {
+      sfx.del();
+      if (unsubscribe) unsubscribe();
+      window.history.replaceState({}, '', window.location.pathname);
+      document.getElementById('boardView').classList.add('hidden');
+      document.getElementById('loginView').classList.remove('hidden');
+      document.getElementById('logoutBtn').classList.add('hidden');
+      document.getElementById('copyLinkBtn').classList.add('hidden');
+    };
+
+    document.getElementById('copyLinkBtn').onclick = () => {
+      sfx.pop();
+      navigator.clipboard.writeText(window.location.href);
+      showToast('הקישור לפרויקט הועתק! שלח אותו לשותפים 🔗');
+    };
+
+    const modal = document.getElementById('taskModal');
+    document.getElementById('openAddModalBtn').onclick = () => { sfx.pop(); openModal(); };
+    document.getElementById('closeModalBtn').onclick = () => modal.classList.add('hidden');
+
+    function openModal(task = null) {
+      document.getElementById('modalTitle').textContent = task ? 'עריכת משימה' : 'משימה חדשה';
+      document.getElementById('taskId').value = task ? task.id : '';
+      document.getElementById('taskTitle').value = task ? task.title : '';
+      document.getElementById('taskStatus').value = task ? task.status : 'todo';
+      document.getElementById('taskPrice').value = task && task.price ? task.price : '';
+      document.getElementById('taskDesc').value = task ? (task.desc || '') : '';
+      document.getElementById('taskNotes').value = task ? (task.notes || '') : '';
+      modal.classList.remove('hidden');
+    }
+
+    document.getElementById('taskForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('taskId').value;
+      const item = {
+        id: id || 'T-' + Date.now(),
+        title: document.getElementById('taskTitle').value.trim(),
+        status: document.getElementById('taskStatus').value,
+        price: Number(document.getElementById('taskPrice').value) || 0,
+        desc: document.getElementById('taskDesc').value.trim(),
+        notes: document.getElementById('taskNotes').value.trim(),
+      };
+
+      if (item.status === 'done') sfx.done();
+      else sfx.pop();
+
+      if (id) {
+        const idx = tasks.findIndex(t => t.id === id);
+        if (idx > -1) tasks[idx] = item;
+        showToast('המשימה עודכנה ✨');
+      } else {
+        tasks.unshift(item);
+        showToast('משימה חדשה נוספה 🎉');
+      }
+
+      modal.classList.add('hidden');
+      await saveTasks();
+    };
+
+    document.getElementById('searchInput').oninput = render;
+    document.getElementById('filterStatus').onchange = () => { sfx.pop(); render(); };
+
+    function render() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const stFilter = document.getElementById('filterStatus').value;
+
+      document.getElementById('statTotal').textContent = tasks.length;
+      document.getElementById('statDone').textContent = tasks.filter(t => t.status === 'done').length;
+      document.getElementById('statActive').textContent = tasks.filter(t => t.status === 'doing' || t.status === 'waiting').length;
+      const totalCost = tasks.reduce((sum, t) => sum + (Number(t.price) || 0), 0);
+      document.getElementById('statCost').textContent = totalCost.toLocaleString() + ' ₪';
+
+      const filtered = tasks.filter(t => {
+        const matchStatus = stFilter === 'all' || t.status === stFilter;
+        const matchText = !q || [t.title, t.desc, t.notes].some(f => (f || '').toLowerCase().includes(q));
+        return matchStatus && matchText;
+      });
+
+      const grid = document.getElementById('taskGrid');
+      if (!filtered.length) {
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">אין משימות להצגה כרגע. לחצו על "+ הוספת משימה חדשה" כדי להתחיל!</div>`;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(t => `
+        <div class="task-card st-${t.status}">
+          <div>
+            <div class="t-top">
+              <h3 class="t-title">${escapeHtml(t.title)}</h3>
+              ${t.price > 0 ? `<span class="t-price">${Number(t.price).toLocaleString()} ₪</span>` : ''}
+            </div>
+            ${t.desc ? `<p class="t-desc" style="margin-top:8px">${escapeHtml(t.desc)}</p>` : ''}
+            ${t.notes ? `<div class="t-notes" style="margin-top:8px">📝 ${escapeHtml(t.notes)}</div>` : ''}
+          </div>
+          <div class="t-footer">
+            <select class="status-select" data-id="${t.id}">
+              <option value="todo" ${t.status === 'todo' ? 'selected' : ''}>📌 עוד לא התחיל</option>
+              <option value="doing" ${t.status === 'doing' ? 'selected' : ''}>⚙️ עובדים על זה</option>
+              <option value="waiting" ${t.status === 'waiting' ? 'selected' : ''}>⏳ מחכה ל...</option>
+              <option value="done" ${t.status === 'done' ? 'selected' : ''}>✅ בוצע</option>
+            </select>
+            <div class="t-actions">
+              <button class="icon-btn edit-btn" data-id="${t.id}" title="עריכה" style="width:34px;height:34px;font-size:15px">✏️</button>
+              <button class="icon-btn del-btn" data-id="${t.id}" title="מחיקה" style="width:34px;height:34px;font-size:15px">🗑️</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      grid.querySelectorAll('.status-select').forEach(sel => {
+        sel.onchange = async (e) => {
+          const task = tasks.find(x => x.id === e.target.dataset.id);
+          if (task) {
+            task.status = e.target.value;
+            if (task.status === 'done') sfx.done();
+            else sfx.pop();
+            await saveTasks();
+            showToast('הסטטוס עודכן');
+          }
+        };
+      });
+
+      grid.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.onclick = () => {
+          sfx.pop();
+          const task = tasks.find(x => x.id === btn.dataset.id);
+          if (task) openModal(task);
+        };
+      });
+
+      grid.querySelectorAll('.del-btn').forEach(btn => {
+        btn.onclick = async () => {
+          if (confirm('למחוק את המשימה הזו?')) {
+            sfx.del();
+            tasks = tasks.filter(x => x.id !== btn.dataset.id);
+            await saveTasks();
+            showToast('המשימה נמחקה', '');
+          }
+        };
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+    }
+  </script>
+</body>
+</html>
