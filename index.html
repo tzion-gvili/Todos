@@ -84,6 +84,14 @@
     </section>
   </main>
 
+  <!-- אזור פרסומות מתחלפות מתוך ads.json -->
+  <section id="adZone" class="ad-zone hidden">
+    <div class="ad-label">📢 הודעות וחסויות</div>
+    <div id="adCard" class="ad-card"></div>
+    <div class="ad-progress"><i id="adBar"></i></div>
+    <div id="adDots" class="ad-dots"></div>
+  </section>
+
   <div id="taskModal" class="modal hidden">
     <div class="modal-card">
       <h2 id="modalTitle" style="margin-top:0">משימה חדשה</h2>
@@ -133,6 +141,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+    // --- מנוע צלילים מתוקים ---
     let soundOn = localStorage.getItem('todo_sound') !== 'off';
     const soundBtn = document.getElementById('soundToggleBtn');
     soundBtn.textContent = soundOn ? '🔊' : '🔇';
@@ -174,6 +183,72 @@
       if (soundOn) sfx.pop();
     };
 
+    // --- מנוע פרסומות מתוך ads.json ---
+    async function initAds() {
+      try {
+        const res = await fetch('ads.json?t=' + Date.now());
+        if (!res.ok) return;
+        const ads = await res.json();
+        if (!Array.isArray(ads) || !ads.length) return;
+
+        const zone = document.getElementById('adZone');
+        const card = document.getElementById('adCard');
+        const bar = document.getElementById('adBar');
+        const dotsBox = document.getElementById('adDots');
+        zone.classList.remove('hidden');
+
+        let idx = 0;
+        let timer = null;
+        const DURATION = 6500;
+
+        dotsBox.innerHTML = ads.map((_, i) => `<button class="dot ${i === 0 ? 'on' : ''}" data-i="${i}" aria-label="פרסומת ${i+1}"></button>`).join('');
+        dotsBox.querySelectorAll('.dot').forEach(d => {
+          d.onclick = () => { idx = Number(d.dataset.i); showAd(); };
+        });
+
+        function showAd() {
+          const ad = ads[idx];
+          card.classList.remove('in');
+          void card.offsetWidth;
+          card.classList.add('in');
+
+          const phoneClean = (ad.phone || '').replace(/[^0-9]/g, '');
+          const waPhone = phoneClean.startsWith('0') ? '972' + phoneClean.slice(1) : phoneClean;
+
+          card.innerHTML = `
+            <div class="ad-icon">${escapeHtml(ad.icon || '✨')}</div>
+            <div class="ad-caption">${escapeHtml(ad.caption || '')}</div>
+            <div class="ad-phrase">${escapeHtml(ad.catchPhrase || '')}</div>
+            ${ad.phone ? `<a class="ad-phone" href="https://wa.me/${waPhone}" target="_blank" rel="noopener">📞 <span class="ltr">${escapeHtml(ad.phone)}</span></a>` : ''}
+            ${ad.link ? `<a class="btn secondary ad-link" href="${escapeHtml(ad.link)}" target="_blank" rel="noopener">למעבר לאפליקציה 🔗</a>` : ''}
+          `;
+
+          dotsBox.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('on', i === idx));
+
+          bar.style.transition = 'none';
+          bar.style.width = '0%';
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              bar.style.transition = `width ${DURATION}ms linear`;
+              bar.style.width = '100%';
+            });
+          });
+
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            idx = (idx + 1) % ads.length;
+            showAd();
+          }, DURATION);
+        }
+
+        showAd();
+      } catch (e) {
+        console.log('Ads skipped:', e);
+      }
+    }
+    initAds();
+
+    // --- חיבור ל-Firebase וניהול משימות ---
     let db = null;
     let unsubscribe = null;
     let currentProjectId = '';

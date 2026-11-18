@@ -70,7 +70,7 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; ba
 }
 .icon-btn:hover { transform: scale(1.1); background: var(--card2); }
 
-main { max-width: 1050px; margin: 0 auto; padding: 24px 16px 40px; position: relative; z-index: 1; }
+main { max-width: 1050px; margin: 0 auto; padding: 24px 16px 24px; position: relative; z-index: 1; }
 
 /* Buttons */
 .btn {
@@ -88,7 +88,7 @@ main { max-width: 1050px; margin: 0 auto; padding: 24px 16px 40px; position: rel
 .btn.small { padding: 7px 14px; font-size: 14px; }
 
 /* Login */
-.login { text-align: center; padding: 30px 0; }
+.login { text-align: center; padding: 24px 0 10px; }
 .hero-icon { font-size: 80px; animation: float 3s ease-in-out infinite; filter: drop-shadow(0 0 24px rgba(247, 200, 115, .5)); }
 .login h1 { font-family: 'Suez One', 'Rubik', serif; font-weight: 400; font-size: clamp(40px, 7vw, 68px); margin: 8px 0; }
 .hl { background: linear-gradient(90deg, #f7c873, #ff7eb3, #ff4f8b); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -154,6 +154,37 @@ select option { background: #2a0f45; color: #fff; }
 .status-select { padding: 6px 10px; font-size: 14px; font-weight: 700; border-radius: 999px; width: auto; background: rgba(0,0,0,.35); border-color: var(--c); color: var(--c); }
 .t-actions { display: flex; gap: 6px; }
 
+/* ---------- Ads (from Tsgreen3 / Kululu) ---------- */
+.ad-zone { max-width: 820px; margin: 10px auto 30px; padding: 0 16px; position: relative; z-index: 1; }
+.ad-label { font-size: 13px; color: var(--muted); font-weight: 700; margin: 0 6px 6px; }
+.ad-card {
+  min-height: 170px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center;
+  padding: 24px 22px; border-radius: 24px;
+  background: linear-gradient(135deg, rgba(247, 200, 115, .18), rgba(255, 79, 139, .16) 60%, rgba(155, 93, 229, .18));
+  border: 2px solid rgba(247, 200, 115, .45); box-shadow: var(--shadow), 0 0 40px rgba(247, 200, 115, .15);
+}
+.ad-card.in > * { animation: rise .55s both; }
+.ad-card.in > :nth-child(2) { animation-delay: .1s; }
+.ad-card.in > :nth-child(3) { animation-delay: .2s; }
+.ad-card.in > :nth-child(4) { animation-delay: .3s; }
+.ad-card.in > :nth-child(5) { animation-delay: .4s; }
+.ad-icon { font-size: 42px; }
+.ad-caption { font-size: clamp(22px, 4vw, 32px); font-weight: 900; }
+.ad-phrase { font-size: clamp(16px, 2.5vw, 19px); color: #ffe7a8; line-height: 1.5; }
+.ad-phone {
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 6px; padding: 10px 22px; border-radius: 999px;
+  font-weight: 900; font-size: 19px; text-decoration: none;
+  color: #3a1500; background: linear-gradient(180deg, #ffe7b0, #f7b955); box-shadow: 0 5px 0 #b97a17; transition: transform .15s;
+}
+.ad-phone:hover { transform: translateY(-2px); }
+.ad-phone:active { transform: translateY(3px); box-shadow: 0 2px 0 #b97a17; }
+.ad-link { margin-top: 2px; font-size: 15px; padding: 8px 18px; max-width: 100%; overflow-wrap: anywhere; }
+.ad-progress { height: 5px; margin: 12px 18px 0; border-radius: 99px; background: rgba(255,255,255,.1); overflow: hidden; }
+.ad-progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #f7c873, #ff4f8b); }
+.ad-dots { display: flex; justify-content: center; gap: 8px; margin-top: 10px; }
+.dot { width: 11px; height: 11px; padding: 0; border-radius: 50%; border: 0; background: rgba(255,255,255,.25); cursor: pointer; transition: transform .2s, background .2s; }
+.dot.on { background: var(--accent); transform: scale(1.35); }
+
 /* Modal */
 .modal { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; background: rgba(15, 5, 30, .75); backdrop-filter: blur(6px); padding: 16px; }
 .modal-card {
@@ -175,5 +206,6 @@ select option { background: #2a0f45; color: #fff; }
 .toast.show { transform: translate(-50%, 0); opacity: 1; }
 .toast.good { background: linear-gradient(90deg, #0f8a5f, #18b87c); }
 
-.site-footer { text-align: center; padding: 18px; color: var(--muted); font-size: 14px; font-weight: 700; border-top: 1px solid var(--line); }
+.site-footer { text-align: center; padding: 18px; color: var(--muted); font-size: 14px; font-weight: 700; border-top: 1px solid var(--line); position: relative; z-index: 1; }
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
