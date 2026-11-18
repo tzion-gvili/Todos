@@ -43,7 +43,11 @@
     <section id="boardView" class="hidden">
       <div class="project-banner">
         <div class="project-badge">פרויקט: <span id="activeProjectLabel" class="ltr"></span></div>
-        <button id="openAddModalBtn" class="btn">+ הוספת משימה חדשה</button>
+        <div class="banner-actions">
+          <button id="shareWaBtn" class="btn wa-btn small" title="שלח סיכום משימות ותקציב לוואטסאפ">💬 סיכום לוואטסאפ</button>
+          <button id="exportExcelBtn" class="btn excel-btn small" title="הורד קובץ אקסל (CSV) מסודר">📊 ייצוא לאקסל</button>
+          <button id="openAddModalBtn" class="btn">+ הוספת משימה חדשה</button>
+        </div>
       </div>
 
       <div class="stats">
@@ -51,11 +55,6 @@
           <span>📋</span>
           <b id="statTotal">0</b>
           <small>סה"כ משימות</small>
-        </div>
-        <div class="stat" style="--c: var(--doing)">
-          <span>⚙️</span>
-          <b id="statActive">0</b>
-          <small>בתהליך / ממתין</small>
         </div>
         <div class="stat" style="--c: var(--good)">
           <span>✅</span>
@@ -67,16 +66,38 @@
           <b id="statCost">0 ₪</b>
           <small>עלות כוללת</small>
         </div>
+        <div class="stat" style="--c: var(--doing)">
+          <span>💳</span>
+          <b id="statDeposit">0 ₪</b>
+          <small>מקדמות ששולמו</small>
+        </div>
+        <div class="stat" style="--c: var(--bad)">
+          <span>⏳</span>
+          <b id="statBalance">0 ₪</b>
+          <small>יתרה לתשלום</small>
+        </div>
       </div>
 
       <div class="toolbar">
-        <input id="searchInput" type="search" placeholder="🔍 חיפוש לפי כותרת, תיאור או הערות..." />
+        <input id="searchInput" type="search" placeholder="🔍 חיפוש לפי כותרת, מטפל, תיאור או טלפון..." />
+        <select id="filterAssignee">
+          <option value="all">👤 כל המטפלים</option>
+        </select>
         <select id="filterStatus">
           <option value="all">כל הסטטוסים</option>
           <option value="todo">📌 עוד לא התחיל</option>
           <option value="doing">⚙️ עובדים על זה</option>
           <option value="waiting">⏳ מחכה ל...</option>
           <option value="done">✅ בוצע</option>
+        </select>
+        <select id="sortBy" title="בחר סדר מיון">
+          <option value="newest">🆕 מיון: הכי חדש</option>
+          <option value="due">📅 מיון: תאריך יעד קרוב</option>
+          <option value="balance">💸 מיון: יתרה לתשלום (מהגבוה)</option>
+          <option value="price">💰 מיון: עלות כוללת (מהגבוה)</option>
+          <option value="status">📊 מיון: לפי סטטוס (פתוחות קודם)</option>
+          <option value="assignee">👤 מיון: לפי מטפל (א-ת)</option>
+          <option value="title">🔤 מיון: לפי כותרת (א-ת)</option>
         </select>
       </div>
 
@@ -101,25 +122,55 @@
           כותרת המשימה *
           <input id="taskTitle" type="text" required placeholder="מה צריך לעשות?" />
         </label>
+        <div class="form-row-2">
+          <label>
+            סטטוס
+            <select id="taskStatus">
+              <option value="todo">📌 עוד לא התחיל</option>
+              <option value="doing">⚙️ עובדים על זה</option>
+              <option value="waiting">⏳ מחכה ל...</option>
+              <option value="done">✅ בוצע</option>
+            </select>
+          </label>
+          <label>
+            מי מטפל? (אחראי משימה)
+            <input id="taskAssignee" type="text" list="assigneeSuggestions" placeholder="למשל: ציון / דנה" />
+            <datalist id="assigneeSuggestions"></datalist>
+          </label>
+        </div>
+        <div class="form-row-2">
+          <label>
+            מחיר / עלות כוללת (₪)
+            <input id="taskPrice" type="number" min="0" step="1" placeholder="0" />
+          </label>
+          <label>
+            מקדמה ששולמה (₪)
+            <input id="taskDeposit" type="number" min="0" step="1" placeholder="0" />
+          </label>
+        </div>
+        <div class="form-row-2">
+          <label>
+            תאריך יעד (דד-ליין)
+            <input id="taskDueDate" type="date" />
+          </label>
+          <label>
+            טלפון איש קשר / ספק
+            <div class="phone-input-row">
+              <input id="taskPhone" type="tel" autocomplete="tel" placeholder="050-0000000" />
+              <button type="button" id="pickContactBtn" class="btn secondary contact-btn" title="בחר מתוך אנשי הקשר בטלפון">📇</button>
+            </div>
+          </label>
+        </div>
         <label>
-          סטטוס
-          <select id="taskStatus">
-            <option value="todo">📌 עוד לא התחיל</option>
-            <option value="doing">⚙️ עובדים על זה</option>
-            <option value="waiting">⏳ מחכה ל...</option>
-            <option value="done">✅ בוצע</option>
-          </select>
-        </label>
-        <label>
-          מחיר / עלות משוערת (₪)
-          <input id="taskPrice" type="number" min="0" step="1" placeholder="0" />
+          קישור רלוונטי (אתר ספק, הצעת מחיר, מפה)
+          <input id="taskLink" type="url" dir="ltr" style="text-align:left" placeholder="https://..." />
         </label>
         <label>
           תיאור מפורט
           <textarea id="taskDesc" rows="2" placeholder="פרטים נוספים על המשימה..."></textarea>
         </label>
         <label>
-          הערות (למשל: למי מחכים, ספק, טלפון)
+          הערות (למשל: למי מחכים, שם ספק)
           <input id="taskNotes" type="text" placeholder="הערות קצרות..." />
         </label>
         <div class="modal-actions">
@@ -140,6 +191,20 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const STATUS_LABELS = {
+      todo: 'עוד לא התחיל',
+      doing: 'עובדים על זה',
+      waiting: 'מחכה ל...',
+      done: 'בוצע'
+    };
+
+    const STATUS_ORDER = {
+      doing: 1,
+      waiting: 2,
+      todo: 3,
+      done: 4
+    };
 
     // --- מנוע צלילים מתוקים ---
     let soundOn = localStorage.getItem('todo_sound') !== 'off';
@@ -181,6 +246,37 @@
       localStorage.setItem('todo_sound', soundOn ? 'on' : 'off');
       soundBtn.textContent = soundOn ? '🔊' : '🔇';
       if (soundOn) sfx.pop();
+    };
+
+    // --- שליפה מאנשי קשר ---
+    const pickContactBtn = document.getElementById('pickContactBtn');
+    pickContactBtn.onclick = async () => {
+      sfx.pop();
+      if ('contacts' in navigator && 'ContactsManager' in window) {
+        try {
+          const contacts = await navigator.contacts.select(['name', 'tel'], { multiple: false });
+          if (contacts && contacts.length) {
+            const c = contacts[0];
+            if (c.tel && c.tel.length) {
+              document.getElementById('taskPhone').value = c.tel[0].replace(/\s+/g, '');
+            }
+            if (c.name && c.name.length) {
+              const notesInput = document.getElementById('taskNotes');
+              if (!notesInput.value.trim()) {
+                notesInput.value = 'איש קשר: ' + c.name[0];
+              }
+            }
+            showToast('איש הקשר נטען 📇');
+          }
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            showToast('לא ניתן לפתוח אנשי קשר במכשיר זה', '');
+          }
+        }
+      } else {
+        showToast('זמין בדפדפני מובייל נתמכים (כרום באנדרואיד) – ניתן להדביק מספר ידנית', '');
+        document.getElementById('taskPhone').focus();
+      }
     };
 
     // --- מנוע פרסומות מתוך ads.json ---
@@ -280,7 +376,7 @@
       const t = document.getElementById('toast');
       t.textContent = msg;
       t.className = `toast show ${type}`;
-      setTimeout(() => t.classList.remove('show'), 2600);
+      setTimeout(() => t.classList.remove('show'), 2800);
     }
 
     document.getElementById('genCodeBtn').onclick = () => {
@@ -360,6 +456,89 @@
       showToast('הקישור לפרויקט הועתק! שלח אותו לשותפים 🔗');
     };
 
+    // --- שיתוף סיכום לוואטסאפ ---
+    document.getElementById('shareWaBtn').onclick = () => {
+      sfx.pop();
+      if (!tasks.length) return showToast('אין משימות לשיתוף עדיין', '');
+
+      const totalCost = tasks.reduce((sum, t) => sum + (Number(t.price) || 0), 0);
+      const totalDeposit = tasks.reduce((sum, t) => sum + (Number(t.deposit) || 0), 0);
+      const totalBalance = Math.max(0, totalCost - totalDeposit);
+      const doneCount = tasks.filter(t => t.status === 'done').length;
+
+      let lines = [
+        `⚡ *סיכום פרויקט: ${currentProjectId}*`,
+        `📊 התקדמות: ${doneCount}/${tasks.length} בוצעו`,
+        `💰 עלות כוללת: ${totalCost.toLocaleString()} ₪ | שולם: ${totalDeposit.toLocaleString()} ₪ | יתרה: ${totalBalance.toLocaleString()} ₪`,
+        `------------------`
+      ];
+
+      const groups = {};
+      tasks.forEach(t => {
+        const key = (t.assignee || '').trim() || 'ללא שיוך';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(t);
+      });
+
+      Object.keys(groups).forEach(person => {
+        lines.push(`\n👤 *${person}:*`);
+        groups[person].forEach(t => {
+          const icon = t.status === 'done' ? '✅' : (t.status === 'doing' ? '⚙️' : (t.status === 'waiting' ? '⏳' : '📌'));
+          const due = t.dueDate ? ` [יעד: ${formatDateHe(t.dueDate)}]` : '';
+          const rem = (Number(t.price) || 0) - (Number(t.deposit) || 0);
+          const money = rem > 0 ? ` (יתרה: ${rem.toLocaleString()} ₪)` : '';
+          lines.push(`${icon} ${t.title}${due}${money}`);
+        });
+      });
+
+      lines.push(`\n🔗 לכניסה ללוח המשותף:\n${window.location.href}`);
+
+      const waUrl = `https://wa.me/?text=${encodeURIComponent(lines.join('\n'))}`;
+      window.open(waUrl, '_blank', 'noopener');
+    };
+
+    // --- ייצוא לאקסל (CSV) ---
+    document.getElementById('exportExcelBtn').onclick = () => {
+      sfx.pop();
+      if (!tasks.length) return showToast('אין משימות לייצוא', '');
+
+      const headers = ['כותרת המשימה', 'סטטוס', 'מי מטפל', 'תאריך יעד', 'עלות כוללת (₪)', 'מקדמה ששולמה (₪)', 'יתרה לתשלום (₪)', 'טלפון', 'תיאור', 'הערות', 'קישור'];
+
+      const rows = tasks.map(t => {
+        const price = Number(t.price) || 0;
+        const deposit = Number(t.deposit) || 0;
+        const balance = Math.max(0, price - deposit);
+        return [
+          t.title || '',
+          STATUS_LABELS[t.status] || t.status,
+          t.assignee || '',
+          t.dueDate || '',
+          price,
+          deposit,
+          balance,
+          t.phone || '',
+          t.desc || '',
+          t.notes || '',
+          t.link || ''
+        ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(',');
+      });
+
+      const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      const dateStr = new Date().toISOString().slice(0, 10);
+      a.download = `Mesimot_${currentProjectId}_${dateStr}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showToast('קובץ האקסל ירד למחשב שלך 📊');
+    };
+
     const modal = document.getElementById('taskModal');
     document.getElementById('openAddModalBtn').onclick = () => { sfx.pop(); openModal(); };
     document.getElementById('closeModalBtn').onclick = () => modal.classList.add('hidden');
@@ -369,7 +548,12 @@
       document.getElementById('taskId').value = task ? task.id : '';
       document.getElementById('taskTitle').value = task ? task.title : '';
       document.getElementById('taskStatus').value = task ? task.status : 'todo';
+      document.getElementById('taskAssignee').value = task ? (task.assignee || '') : '';
       document.getElementById('taskPrice').value = task && task.price ? task.price : '';
+      document.getElementById('taskDeposit').value = task && task.deposit ? task.deposit : '';
+      document.getElementById('taskDueDate').value = task ? (task.dueDate || '') : '';
+      document.getElementById('taskPhone').value = task ? (task.phone || '') : '';
+      document.getElementById('taskLink').value = task ? (task.link || '') : '';
       document.getElementById('taskDesc').value = task ? (task.desc || '') : '';
       document.getElementById('taskNotes').value = task ? (task.notes || '') : '';
       modal.classList.remove('hidden');
@@ -378,11 +562,21 @@
     document.getElementById('taskForm').onsubmit = async (e) => {
       e.preventDefault();
       const id = document.getElementById('taskId').value;
+      let rawLink = document.getElementById('taskLink').value.trim();
+      if (rawLink && !/^https?:\/\//i.test(rawLink)) {
+        rawLink = 'https://' + rawLink;
+      }
+
       const item = {
         id: id || 'T-' + Date.now(),
         title: document.getElementById('taskTitle').value.trim(),
         status: document.getElementById('taskStatus').value,
+        assignee: document.getElementById('taskAssignee').value.trim(),
         price: Number(document.getElementById('taskPrice').value) || 0,
+        deposit: Number(document.getElementById('taskDeposit').value) || 0,
+        dueDate: document.getElementById('taskDueDate').value,
+        phone: document.getElementById('taskPhone').value.trim(),
+        link: rawLink,
         desc: document.getElementById('taskDesc').value.trim(),
         notes: document.getElementById('taskNotes').value.trim(),
       };
@@ -403,40 +597,173 @@
       await saveTasks();
     };
 
+    // --- אירועי סינון ומיון ---
+    const sortSelect = document.getElementById('sortBy');
+    const savedSort = localStorage.getItem('todo_sort');
+    if (savedSort) sortSelect.value = savedSort;
+
     document.getElementById('searchInput').oninput = render;
     document.getElementById('filterStatus').onchange = () => { sfx.pop(); render(); };
+    document.getElementById('filterAssignee').onchange = () => { sfx.pop(); render(); };
+    sortSelect.onchange = () => {
+      sfx.pop();
+      localStorage.setItem('todo_sort', sortSelect.value);
+      render();
+    };
+
+    function sortTasks(list, mode) {
+      const arr = [...list];
+      switch (mode) {
+        case 'due':
+          // משימות פתוחות עם תאריך יעד קרוב קודם; משימות שבוצעו או ללא תאריך יורדות לסוף
+          return arr.sort((a, b) => {
+            const aDone = a.status === 'done' ? 1 : 0;
+            const bDone = b.status === 'done' ? 1 : 0;
+            if (aDone !== bDone) return aDone - bDone;
+            const aDate = a.dueDate || '9999-12-31';
+            const bDate = b.dueDate || '9999-12-31';
+            return aDate.localeCompare(bDate);
+          });
+        case 'balance':
+          return arr.sort((a, b) => {
+            const remA = Math.max(0, (Number(a.price) || 0) - (Number(a.deposit) || 0));
+            const remB = Math.max(0, (Number(b.price) || 0) - (Number(b.deposit) || 0));
+            return remB - remA;
+          });
+        case 'price':
+          return arr.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+        case 'status':
+          return arr.sort((a, b) => (STATUS_ORDER[a.status] || 9) - (STATUS_ORDER[b.status] || 9));
+        case 'assignee':
+          return arr.sort((a, b) => {
+            const nameA = (a.assignee || '').trim() || 'תתת';
+            const nameB = (b.assignee || '').trim() || 'תתת';
+            return nameA.localeCompare(nameB, 'he');
+          });
+        case 'title':
+          return arr.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'he'));
+        case 'newest':
+        default:
+          return arr; // מערך tasks כבר נשמר בסדר מהחדש לישן
+      }
+    }
+
+    function updateAssigneeControls() {
+      const names = [...new Set(tasks.map(t => (t.assignee || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'he'));
+      const filterSel = document.getElementById('filterAssignee');
+      const currentVal = filterSel.value;
+
+      filterSel.innerHTML = `<option value="all">👤 כל המטפלים</option>` +
+        names.map(n => `<option value="${escapeHtml(n)}">👤 ${escapeHtml(n)}</option>`).join('');
+
+      if (names.includes(currentVal)) filterSel.value = currentVal;
+
+      const datalist = document.getElementById('assigneeSuggestions');
+      datalist.innerHTML = names.map(n => `<option value="${escapeHtml(n)}">`).join('');
+    }
+
+    function formatDateHe(iso) {
+      if (!iso) return '';
+      const [y, m, d] = iso.split('-');
+      return `${d}/${m}/${y}`;
+    }
+
+    function getDueInfo(iso, status) {
+      if (!iso || status === 'done') return iso ? { cls: '', label: `📅 יעד: ${formatDateHe(iso)}`, overdue: false } : null;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const due = new Date(iso + 'T00:00:00');
+      const diffDays = Math.round((due - today) / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) {
+        return { cls: 'late', label: `🚨 באיחור (${formatDateHe(iso)})`, overdue: true };
+      } else if (diffDays === 0) {
+        return { cls: 'soon', label: `⏰ יעד היום! (${formatDateHe(iso)})`, overdue: false };
+      } else if (diffDays <= 3) {
+        return { cls: 'soon', label: `⏳ בעוד ${diffDays} ימים (${formatDateHe(iso)})`, overdue: false };
+      }
+      return { cls: '', label: `📅 יעד: ${formatDateHe(iso)}`, overdue: false };
+    }
 
     function render() {
+      updateAssigneeControls();
+
       const q = document.getElementById('searchInput').value.toLowerCase();
       const stFilter = document.getElementById('filterStatus').value;
+      const asFilter = document.getElementById('filterAssignee').value;
+      const sortMode = sortSelect.value;
 
       document.getElementById('statTotal').textContent = tasks.length;
       document.getElementById('statDone').textContent = tasks.filter(t => t.status === 'done').length;
-      document.getElementById('statActive').textContent = tasks.filter(t => t.status === 'doing' || t.status === 'waiting').length;
+
       const totalCost = tasks.reduce((sum, t) => sum + (Number(t.price) || 0), 0);
+      const totalDeposit = tasks.reduce((sum, t) => sum + (Number(t.deposit) || 0), 0);
+      const totalBalance = Math.max(0, totalCost - totalDeposit);
+
       document.getElementById('statCost').textContent = totalCost.toLocaleString() + ' ₪';
+      document.getElementById('statDeposit').textContent = totalDeposit.toLocaleString() + ' ₪';
+      document.getElementById('statBalance').textContent = totalBalance.toLocaleString() + ' ₪';
 
       const filtered = tasks.filter(t => {
         const matchStatus = stFilter === 'all' || t.status === stFilter;
-        const matchText = !q || [t.title, t.desc, t.notes].some(f => (f || '').toLowerCase().includes(q));
-        return matchStatus && matchText;
+        const matchAssignee = asFilter === 'all' || (t.assignee || '').trim() === asFilter;
+        const matchText = !q || [t.title, t.assignee, t.desc, t.notes, t.phone].some(f => (f || '').toLowerCase().includes(q));
+        return matchStatus && matchAssignee && matchText;
       });
 
+      const sorted = sortTasks(filtered, sortMode);
+
       const grid = document.getElementById('taskGrid');
-      if (!filtered.length) {
+      if (!sorted.length) {
         grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted);">אין משימות להצגה כרגע. לחצו על "+ הוספת משימה חדשה" כדי להתחיל!</div>`;
         return;
       }
 
-      grid.innerHTML = filtered.map(t => `
-        <div class="task-card st-${t.status}">
+      grid.innerHTML = sorted.map(t => {
+        const price = Number(t.price) || 0;
+        const deposit = Number(t.deposit) || 0;
+        const balance = Math.max(0, price - deposit);
+        const dueInfo = getDueInfo(t.dueDate, t.status);
+
+        const phoneClean = (t.phone || '').replace(/[^0-9]/g, '');
+        const waPhone = phoneClean.startsWith('0') ? '972' + phoneClean.slice(1) : phoneClean;
+
+        return `
+        <div class="task-card st-${t.status} ${dueInfo && dueInfo.overdue ? 'overdue' : ''}">
           <div>
             <div class="t-top">
               <h3 class="t-title">${escapeHtml(t.title)}</h3>
-              ${t.price > 0 ? `<span class="t-price">${Number(t.price).toLocaleString()} ₪</span>` : ''}
+              ${price > 0 ? `<span class="t-price">${price.toLocaleString()} ₪</span>` : ''}
             </div>
+
+            ${(t.assignee || dueInfo) ? `
+              <div class="t-meta-row">
+                ${t.assignee ? `<span class="t-assignee">👤 ${escapeHtml(t.assignee)}</span>` : ''}
+                ${dueInfo ? `<span class="t-due ${dueInfo.cls}">${dueInfo.label}</span>` : ''}
+              </div>
+            ` : ''}
+
+            ${(deposit > 0) ? `
+              <div class="t-finance">
+                <span class="fin-chip paid">💳 מקדמה: ${deposit.toLocaleString()} ₪</span>
+                ${price > 0 ? `<span class="fin-chip rem">⏳ יתרה: ${balance.toLocaleString()} ₪</span>` : ''}
+              </div>
+            ` : ''}
+
             ${t.desc ? `<p class="t-desc" style="margin-top:8px">${escapeHtml(t.desc)}</p>` : ''}
             ${t.notes ? `<div class="t-notes" style="margin-top:8px">📝 ${escapeHtml(t.notes)}</div>` : ''}
+
+            ${(t.phone || t.link) ? `
+              <div class="t-links">
+                ${t.phone ? `
+                  <a class="t-action-pill tel" href="tel:${escapeHtml(t.phone)}">📞 <span class="ltr">${escapeHtml(t.phone)}</span></a>
+                  <a class="t-action-pill wa" href="https://wa.me/${waPhone}" target="_blank" rel="noopener">💬 וואטסאפ</a>
+                ` : ''}
+                ${t.link ? `
+                  <a class="t-action-pill url" href="${escapeHtml(t.link)}" target="_blank" rel="noopener">🔗 פתח קישור</a>
+                ` : ''}
+              </div>
+            ` : ''}
           </div>
           <div class="t-footer">
             <select class="status-select" data-id="${t.id}">
@@ -451,7 +778,7 @@
             </div>
           </div>
         </div>
-      `).join('');
+      `}).join('');
 
       grid.querySelectorAll('.status-select').forEach(sel => {
         sel.onchange = async (e) => {
