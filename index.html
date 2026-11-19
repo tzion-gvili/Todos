@@ -28,13 +28,12 @@
     <section id="loginView" class="login">
       <div class="hero-icon">🚀</div>
       <h1>מנהלים <span class="hl">ביחד</span></h1>
-      <p class="muted">הזינו מזהה פרויקט (ID) כדי להיכנס ללוח המשותף, או צרו קוד חדש</p>
+      <p class="muted">היכנסו עם תעודת זהות או כל מזהה יחידני אחר כדי לגשת ללוח המשותף</p>
 
       <div class="login-card">
-        <label for="projectIdInput">קוד פרויקט (Project ID)</label>
+        <label for="projectIdInput">תעודת זהות או מזהה יחידני אחר</label>
         <div class="code-row">
-          <input id="projectIdInput" type="text" placeholder="למשל: HOME-2026" maxlength="20" />
-          <button id="genCodeBtn" class="btn secondary small" type="button" title="צור קוד אקראי">🎲 חדש</button>
+          <input id="projectIdInput" type="text" placeholder="הזינו ת״ז או קוד אישי..." maxlength="30" />
         </div>
         <button id="enterBtn" class="btn" type="button">כניסה לפרויקט ✨</button>
       </div>
@@ -223,8 +222,7 @@
       pop: () => playTone([520, 680], 'sine', 0.1, 0.04),
       enter: () => playTone([440, 554.37, 659.25], 'triangle', 0.16, 0.07),
       done: () => playTone([523.25, 659.25, 783.99, 1046.5], 'sine', 0.18, 0.08),
-      del: () => playTone([380, 260], 'sine', 0.14, 0.06),
-      dice: () => playTone([600, 750, 900], 'sine', 0.07, 0.04)
+      del: () => playTone([380, 260], 'sine', 0.14, 0.06)
     };
 
     soundBtn.onclick = () => {
@@ -365,17 +363,18 @@
       setTimeout(() => t.classList.remove('show'), 2800);
     }
 
-    document.getElementById('genCodeBtn').onclick = () => {
-      sfx.dice();
-      const code = 'PRJ-' + Math.random().toString(36).substring(2, 6).toUpperCase();
-      document.getElementById('projectIdInput').value = code;
-    };
-
     document.getElementById('enterBtn').onclick = () => {
       const val = document.getElementById('projectIdInput').value.trim().toUpperCase();
-      if (!val) return showToast('נא להזין קוד פרויקט', '');
+      if (!val) return showToast('נא להזין תעודת זהות או מזהה יחידני', '');
       sfx.enter();
       openProject(val);
+    };
+
+    document.getElementById('projectIdInput').onkeydown = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('enterBtn').click();
+      }
     };
 
     const urlParams = new URLSearchParams(window.location.search);
