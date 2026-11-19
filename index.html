@@ -3,7 +3,52 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>משימות בכיף – ניהול פרויקט משותף</title>
+  
+  <!-- תגיות בסיס לקידום אורגני (SEO) -->
+  <title>משימות בכיף – ניהול משימות ותקציב לפרויקט משותף</title>
+  <meta name="description" content="אפליקציית משימות בכיף לניהול פרויקטים ומשימות משותפות בזמן אמת. מעקב אחר תקציב, מקדמות ויתרות לתשלום, סינון לפי נושאים, ייצוא לאקסל ושיתוף מהיר בוואטסאפ." />
+  <meta name="keywords" content="ניהול משימות, ניהול פרויקטים, משימות בכיף, רשימת מטלות משותפת, מעקב תקציב, ניהול הוצאות ומקדמות, ארגון אירועים, שיתוף משימות בוואטסאפ, TgSofts" />
+  <meta name="author" content="TgSofts" />
+  <meta name="robots" content="index, follow" />
+  <meta name="language" content="Hebrew" />
+  <meta name="theme-color" content="#1e293b" />
+
+  <!-- תגיות Open Graph לשיתוף בוואטסאפ, פייסבוק ולינקדאין -->
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="he_IL" />
+  <meta property="og:site_name" content="משימות בכיף" />
+  <meta property="og:title" content="משימות בכיף – ניהול משימות ותקציב לפרויקט משותף" />
+  <meta property="og:description" content="מנהלים ביחד! לוח משימות משותף עם מעקב תקציב, מקדמות, ייצוא לאקסל ושיתוף סיכומים בוואטסאפ בקליק." />
+
+  <!-- תגיות Twitter / X Cards -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="משימות בכיף – ניהול פרויקט משותף" />
+  <meta name="twitter:description" content="לוח משימות משותף עם מעקב תקציב, מקדמות, ייצוא לאקסל ושיתוף מהיר בוואטסאפ." />
+
+  <!-- נתונים מובנים (Schema.org) עבור מנוע החיפוש של גוגל -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "משימות בכיף",
+    "alternateName": "משימות בכיף - ניהול פרויקט משותף",
+    "description": "אפליקציית רשת לניהול משימות משותפות, מעקב עלויות, מקדמות ויתרות לתשלום, כולל ייצוא לאקסל ושיתוף בוואטסאפ.",
+    "applicationCategory": "ProductivityApplication",
+    "operatingSystem": "Web",
+    "inLanguage": "he",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "ILS"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "TgSofts",
+      "telephone": "052-5914007"
+    }
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&family=Suez+One&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
@@ -485,9 +530,12 @@
         lines.push(`${icon} ${topicTag}${t.title}${money}`);
       });
 
-      lines.push(`\n🔗 לכניסה ללוח המשותף:\n${window.location.href}`);
+      lines.push(`
+🔗 לכניסה ללוח המשותף:
+${window.location.href}`);
 
-      const waUrl = `https://wa.me/?text=${encodeURIComponent(lines.join('\n'))}`;
+      const waUrl = `https://wa.me/?text=${encodeURIComponent(lines.join('
+'))}`;
       window.open(waUrl, '_blank', 'noopener');
     };
 
@@ -516,7 +564,8 @@
         ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(',');
       });
 
-      const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+      const csvContent = '﻿' + [headers.join(','), ...rows].join('
+');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
 
@@ -525,7 +574,7 @@
       if (topicFilter === '__none__') {
         topicSuffix = '_ללא_נושא';
       } else if (topicFilter !== 'all') {
-        const cleanTopic = topicFilter.replace(/[\\/:*?"<>|]/g, '').trim().replace(/\s+/g, '_');
+        const cleanTopic = topicFilter.replace(/[\/:*?"<>|]/g, '').trim().replace(/\s+/g, '_');
         if (cleanTopic) topicSuffix = '_' + cleanTopic;
       }
 
