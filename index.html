@@ -441,26 +441,45 @@
       showToast('הקישור לפרויקט הועתק! שלח אותו לשותפים 🔗');
     };
 
-    // --- שיתוף סיכום לוואטסאפ ---
+    // --- פונקציית עזר לקבלת המשימות המסוננות כרגע ---
+    function getFilteredTasks() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const topicFilter = document.getElementById('filterTopic').value;
+      const stFilter = document.getElementById('filterStatus').value;
+
+      return tasks.filter(t => {
+        const tTopic = (t.topic || '').trim();
+        const matchTopic = topicFilter === 'all' || (topicFilter === '__none__' ? !tTopic : tTopic === topicFilter);
+        const matchStatus = stFilter === 'all' || t.status === stFilter;
+        const matchText = !q || [t.topic, t.title, t.desc, t.notes, t.phone].some(f => (f || '').toLowerCase().includes(q));
+        return matchTopic && matchStatus && matchText;
+      });
+    }
+
+    // --- שיתוף סיכום לוואטסאפ (לפי התצוגה המסוננת) ---
     document.getElementById('shareWaBtn').onclick = () => {
       sfx.pop();
-      if (!tasks.length) return showToast('אין משימות לשיתוף עדיין', '');
+      const visibleTasks = getFilteredTasks();
+      if (!visibleTasks.length) return showToast('אין משימות לשיתוף בתצוגה הנוכחית', '');
 
-      const totalCost = tasks.reduce((sum, t) => sum + (Number(t.price) || 0), 0);
-      const totalDeposit = tasks.reduce((sum, t) => sum + (Number(t.deposit) || 0), 0);
+      const topicFilter = document.getElementById('filterTopic').value;
+      const topicHeader = (topicFilter !== 'all' && topicFilter !== '__none__') ? ` (${topicFilter})` : '';
+
+      const totalCost = visibleTasks.reduce((sum, t) => sum + (Number(t.price) || 0), 0);
+      const totalDeposit = visibleTasks.reduce((sum, t) => sum + (Number(t.deposit) || 0), 0);
       const totalBalance = Math.max(0, totalCost - totalDeposit);
-      const doneCount = tasks.filter(t => t.status === 'done').length;
+      const doneCount = visibleTasks.filter(t => t.status === 'done').length;
 
       let lines = [
-        `⚡ *סיכום פרויקט: ${currentProjectId}*`,
-        `📊 התקדמות: ${doneCount}/${tasks.length} בוצעו`,
+        `⚡ *סיכום פרויקט: ${currentProjectId}${topicHeader}*`,
+        `📊 התקדמות: ${doneCount}/${visibleTasks.length} בוצעו`,
         `💰 עלות כוללת: ${totalCost.toLocaleString()} ₪ | שולם: ${totalDeposit.toLocaleString()} ₪ | יתרה: ${totalBalance.toLocaleString()} ₪`,
         `------------------`
       ];
 
-      tasks.forEach(t => {
+      visibleTasks.forEach(t => {
         const icon = t.status === 'done' ? '✅' : (t.status === 'doing' ? '⚙️' : (t.status === 'waiting' ? '⏳' : '📌'));
-        const topicTag = t.topic ? `[${t.topic}] ` : '';
+        const topicTag = (t.topic && topicFilter === 'all') ? `[${t.topic}] ` : '';
         const rem = (Number(t.price) || 0) - (Number(t.deposit) || 0);
         const money = rem > 0 ? ` (יתרה: ${rem.toLocaleString()} ₪)` : '';
         lines.push(`${icon} ${topicTag}${t.title}${money}`);
@@ -472,14 +491,15 @@
       window.open(waUrl, '_blank', 'noopener');
     };
 
-    // --- ייצוא לאקסל (CSV) ---
+    // --- ייצוא לאקסל (CSV) כולל שם הנושא בשם הקובץ ---
     document.getElementById('exportExcelBtn').onclick = () => {
       sfx.pop();
-      if (!tasks.length) return showToast('אין משימות לייצוא', '');
+      const visibleTasks = getFilteredTasks();
+      if (!visibleTasks.length) return showToast('אין משימות לייצוא', '');
 
       const headers = ['נושא', 'כותרת המשימה', 'סטטוס', 'עלות כוללת (₪)', 'מקדמה ששולמה (₪)', 'יתרה לתשלום (₪)', 'טלפון', 'תיאור', 'הערות'];
 
-      const rows = tasks.map(t => {
+      const rows = visibleTasks.map(t => {
         const price = Number(t.price) || 0;
         const deposit = Number(t.deposit) || 0;
         const balance = Math.max(0, price - deposit);
@@ -500,10 +520,19 @@
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
 
+      const topicFilter = document.getElementById('filterTopic').value;
+      let topicSuffix = '';
+      if (topicFilter === '__none__') {
+        topicSuffix = '_ללא_נושא';
+      } else if (topicFilter !== 'all') {
+        const cleanTopic = topicFilter.replace(/[\\/:*?"<>|]/g, '').trim().replace(/\s+/g, '_');
+        if (cleanTopic) topicSuffix = '_' + cleanTopic;
+      }
+
       const a = document.createElement('a');
       a.href = url;
       const dateStr = new Date().toISOString().slice(0, 10);
-      a.download = `Mesimot_${currentProjectId}_${dateStr}.csv`;
+      a.download = `Mesimot_${currentProjectId}${topicSuffix}_${dateStr}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -513,13 +542,18 @@
     };
 
     const modal = document.getElementById('taskModal');
-    document.getElementById('openAddModalBtn').onclick = () => { sfx.pop(); openModal(); };
+    document.getElementById('openAddModalBtn').onclick = () => {
+      sfx.pop();
+      const activeTopic = document.getElementById('filterTopic').value;
+      const defaultTopic = (activeTopic !== 'all' && activeTopic !== '__none__') ? activeTopic : '';
+      openModal(null, defaultTopic);
+    };
     document.getElementById('closeModalBtn').onclick = () => modal.classList.add('hidden');
 
-    function openModal(task = null) {
+    function openModal(task = null, defaultTopic = '') {
       document.getElementById('modalTitle').textContent = task ? 'עריכת משימה' : 'משימה חדשה';
       document.getElementById('taskId').value = task ? task.id : '';
-      document.getElementById('taskTopic').value = task ? (task.topic || '') : '';
+      document.getElementById('taskTopic').value = task ? (task.topic || '') : defaultTopic;
       document.getElementById('taskTitle').value = task ? task.title : '';
       document.getElementById('taskStatus').value = task ? task.status : 'todo';
       document.getElementById('taskPrice').value = task && task.price ? task.price : '';
@@ -629,29 +663,20 @@
     function render() {
       updateTopicsUI();
 
-      const q = document.getElementById('searchInput').value.toLowerCase();
-      const topicFilter = document.getElementById('filterTopic').value;
-      const stFilter = document.getElementById('filterStatus').value;
+      const filtered = getFilteredTasks();
       const sortMode = sortSelect.value;
 
-      document.getElementById('statTotal').textContent = tasks.length;
-      document.getElementById('statDone').textContent = tasks.filter(t => t.status === 'done').length;
+      // חישוב כרטיסיות הסטטיסטיקה לפי המשימות המסוננות כרגע
+      document.getElementById('statTotal').textContent = filtered.length;
+      document.getElementById('statDone').textContent = filtered.filter(t => t.status === 'done').length;
 
-      const totalCost = tasks.reduce((sum, t) => sum + (Number(t.price) || 0), 0);
-      const totalDeposit = tasks.reduce((sum, t) => sum + (Number(t.deposit) || 0), 0);
+      const totalCost = filtered.reduce((sum, t) => sum + (Number(t.price) || 0), 0);
+      const totalDeposit = filtered.reduce((sum, t) => sum + (Number(t.deposit) || 0), 0);
       const totalBalance = Math.max(0, totalCost - totalDeposit);
 
       document.getElementById('statCost').textContent = totalCost.toLocaleString() + ' ₪';
       document.getElementById('statDeposit').textContent = totalDeposit.toLocaleString() + ' ₪';
       document.getElementById('statBalance').textContent = totalBalance.toLocaleString() + ' ₪';
-
-      const filtered = tasks.filter(t => {
-        const tTopic = (t.topic || '').trim();
-        const matchTopic = topicFilter === 'all' || (topicFilter === '__none__' ? !tTopic : tTopic === topicFilter);
-        const matchStatus = stFilter === 'all' || t.status === stFilter;
-        const matchText = !q || [t.topic, t.title, t.desc, t.notes, t.phone].some(f => (f || '').toLowerCase().includes(q));
-        return matchTopic && matchStatus && matchText;
-      });
 
       const sorted = sortTasks(filtered, sortMode);
 
